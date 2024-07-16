@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div id="header"></div>
+    <main>
+        <h1>Your Stats</h1>
+        <!-- Display current stats -->
+        <div id="user-stats">
+            <p>Bench Press: <span id="bench-press">0</span></p>
+            <p>Deadlift: <span id="deadlift">0</span></p>
+            <p>Squat: <span id="squat">0</span></p>
+        </div>
+
+        <!-- Form to update stats -->
+        <form id="updateStatsForm">
+            <label for="bench">Bench Press:</label>
+            <input type="number" id="bench" name="bench" required>
+            <br>
+            <label for="deadlift">Deadlift:</label>
+            <input type="number" id="deadlift" name="deadlift" required>
+            <br>
+            <label for="squat">Squat:</label>
+            <input type="number" id="squat" name="squat" required>
+            <br>
+            <button type="submit">Update Stats</button>
+        </form>
+        <div id="updateStatsMessage"></div>
+
+        <!-- Form to change profile picture -->
+        <form id="changePfpForm" enctype="multipart/form-data">
+            <label for="newProfilePic">Change Profile Picture:</label>
+            <input type="file" id="newProfilePic" name="newProfilePic" accept="image/*">
+            <button type="submit">Update Profile Picture</button>
+        </form>
+        <div id="changePfpMessage"></div>
+    </main>
+    <script src="/js/loadComps.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch and display current stats
+            fetch('/user-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.name) {
+                        document.getElementById('bench-press').textContent = data.bench;
+                        document.getElementById('deadlift').textContent = data.deadlift;
+                        document.getElementById('squat').textContent = data.squat;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Handle update stats form submission
+            document.getElementById('updateStatsForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const bench = document.getElementById('bench').value;
+                const deadlift = document.getElementById('deadlift').value;
+                const squat = document.getElementById('squat').value;
+
+                fetch('/submit-stats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ bench, deadlift, squat })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('bench-press').textContent = bench;
+                        document.getElementById('deadlift').textContent = deadlift;
+                        document.getElementById('squat').textContent = squat;
+                        document.getElementById('updateStatsMessage').textContent = 'Stats updated successfully.';
+                    } else {
+                        document.getElementById('updateStatsMessage').textContent = 'Failed to update stats.';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+            // Handle change profile picture form submission
+            document.getElementById('changePfpForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const formData = new FormData();
+                const fileInput = document.getElementById('newProfilePic');
+                if (fileInput.files.length === 0) {
+                    document.getElementById('changePfpMessage').textContent = 'Please select a file.';
+                    return;
+                }
+                formData.append('newProfilePic', fileInput.files[0]);
+
+                fetch('/update-profile-pic', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('profilePic').src = data.imagePath;
+                        document.getElementById('changePfpMessage').textContent = 'Profile picture updated successfully.';
+                    } else {
+                        document.getElementById('changePfpMessage').textContent = 'Failed to update profile picture.';
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+</body>
+</html>

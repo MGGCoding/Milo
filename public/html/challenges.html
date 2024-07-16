@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Challenges - Gym App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!----edit header in header.html-->
+    <div id="header"></div>
+    <main>
+        <h1>Challenges</h1>
+        <button id="clickButton">Click Me!</button>
+        <p>Number of clicks: <span id="clicks">0</span></p>
+    </main>
+    <script src = "../js/pfpcode.js"></script>
+    <script src="../js/loadComps.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch user data and update the UI
+            fetch('/user-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.name) {
+                        document.getElementById('profile-name').textContent = data.name;
+                        document.getElementById('profile-pic').src = data.imagePath;
+                        document.getElementById('clicks').textContent = data.clicks;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Handle button click
+            document.getElementById('clickButton').addEventListener('click', () => {
+                fetch('/update-clicks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('clicks').textContent = data.clicks;
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
+</body>
+</html>

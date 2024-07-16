@@ -72,16 +72,33 @@ app.use(session({
     cookie: { secure: false }
 }));
 
+// Routes to serve static HTML files
+app.get('/home', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/html', 'home.html'));
+});
+
+app.get('/forum', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/html', 'forum.html'));
+});
+
+app.get('/challenges', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/html', 'challenges.html'));
+});
+
+app.get('/stats', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/html', 'stats.html'));
+});
+
 app.post('/signup', async (req, res) => {
     const { name, password } = req.body;
     try {
         const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
         const user = await User.create({ name, password: hashedPassword });
-        req.session.userId = user.id;
-        res.json({ success: true, user });
+        req.session.userId = user.id; // Set the user session
+        res.json({ success: true });
     } catch (error) {
-        console.error('Error during sign up:', error); // Log the error
-        res.status(500).json({ error: 'Failed to sign up', details: error.message });
+        console.error('Error creating user:', error); // Log the error details
+        res.status(500).json({ error: 'Failed to create user', details: error.message });
     }
 });
 
@@ -121,20 +138,24 @@ app.post('/submit', upload.single('image'), async (req, res) => {
     }
 });
 
-app.get('/stats', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'stats.html'));
-});
-
-app.get('/home', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'home.html'));
-});
-
-app.get('/forum', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'forum.html'));
-});
-
-app.get('/challenges', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'challenges.html'));
+app.post('/update-profile-pic', upload.single('newProfilePic'), async (req, res) => {
+    if (req.session.userId) {
+        try {
+            const user = await User.findByPk(req.session.userId);
+            if (user) {
+                user.imagePath = `/uploads/${req.file.filename}`;
+                await user.save();
+                res.json({ success: true, imagePath: user.imagePath });
+            } else {
+                res.status(404).json({ error: 'User not found' });
+            }
+        } catch (error) {
+            console.error('Error updating profile picture:', error); // Log the error
+            res.status(500).json({ error: 'Failed to update profile picture', details: error.message });
+        }
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
 });
 
 app.get('/stats-data', async (req, res) => {
@@ -178,11 +199,53 @@ app.get('/user/:id', async (req, res) => {
 
 app.get('/user-data', async (req, res) => {
     if (req.session.userId) {
-        const user = await User.findByPk(req.session.userId);
-        res.json(user);
+        try {
+            const user = await User.findByPk(req.session.userId);
+            if (user) {
+                res.json(user);
+            } else {
+                res.status(404).json({ error: 'User not found' });
+            }
+        } catch (error) {
+            console.error('Error fetching user:', error); // Log the error
+            res.status(500).json({ error: 'Failed to fetch user', details: error.message });
+        }
     } else {
         res.json({});
     }
+});
+
+app.post('/submit-stats', async (req, res) => {
+    if (req.session.userId) {
+        try {
+            const user = await User.findByPk(req.session.userId);
+            if (user) {
+                const { bench, deadlift, squat } = req.body;
+                user.bench = bench;
+                user.deadlift = deadlift;
+                user.squat = squat;
+                await user.save();
+                res.json({ success: true });
+            } else {
+                res.status(404).json({ error: 'User not found' });
+            }
+        } catch (error) {
+            console.error('Error updating stats:', error); // Log the error
+            res.status(500).json({ error: 'Failed to update stats', details: error.message });
+        }
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to log out' });
+        }
+        res.clearCookie('connect.sid');
+        res.json({ success: true });
+    });
 });
 
 app.listen(PORT, () => {
