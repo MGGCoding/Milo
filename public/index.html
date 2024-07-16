@@ -3,31 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Stats</title>
+    <title>Login - Gym App</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Upload Your Gym Stats</h1>
-        <form id="statsForm" class="form" enctype="multipart/form-data">
+    <main>
+        <h1>Login</h1>
+        <form id="loginForm">
             <label for="name">Name:</label>
             <input type="text" id="name" name="name" required>
-
-            <label for="image">Profile Picture:</label>
-            <input type="file" id="image" name="image" accept="image/*" >
-
-            <label for="bench">Bench Press (lbs):</label>
-            <input type="number" id="bench" name="bench" required>
-
-            <label for="deadlift">Deadlift (lbs):</label>
-            <input type="number" id="deadlift" name="deadlift" required>
-
-            <label for="squat">Squat (lbs):</label>
-            <input type="number" id="squat" name="squat" required>
-
-            <button type="submit">Submit</button>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Login</button>
         </form>
-    </div>
-    <script src="script.js"></script>
+        <h1>Sign Up</h1>
+        <form id="signupForm">
+            <label for="signupName">Name:</label>
+            <input type="text" id="signupName" name="name" required>
+            <label for="signupPassword">Password:</label>
+            <input type="password" id="signupPassword" name="password" required>
+            <button type="submit">Sign Up</button>
+        </form>
+        <div id="error-message"></div>
+    </main>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const password = document.getElementById('password').value;
+            fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/home';
+                } else {
+                    document.getElementById('error-message').textContent = data.error || 'Login failed';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById('signupForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('signupName').value;
+            const password = document.getElementById('signupPassword').value;
+            fetch('/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/home';
+                } else {
+                    document.getElementById('error-message').textContent = data.error || 'Sign up failed';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
 </body>
 </html>

@@ -17,13 +17,45 @@
             </ul>
         </nav>
         <div class="profile">
-            <img src="logo.png" alt="Profile Picture" class="profile-pic">
-            <span class="profile-name">User Name</span>
+            <img src="logo.png" alt="Profile Picture" class="profile-pic" id="profile-pic">
+            <span class="profile-name" id="profile-name">User Name</span>
         </div>
     </header>
     <main>
-        <h1>Challenges Page</h1>
-        <p>Content for the challenges will go here.</p>
+        <h1>Challenges</h1>
+        <button id="clickButton">Click Me!</button>
+        <p>Number of clicks: <span id="clicks">0</span></p>
     </main>
+    <script src="cookieListener.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch user data and update the UI
+            fetch('/user-data')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.name) {
+                        document.getElementById('profile-name').textContent = data.name;
+                        document.getElementById('profile-pic').src = data.imagePath;
+                        document.getElementById('clicks').textContent = data.clicks;
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Handle button click
+            document.getElementById('clickButton').addEventListener('click', () => {
+                fetch('/update-clicks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('clicks').textContent = data.clicks;
+                })
+                .catch(error => console.error('Error:', error));
+            });
+        });
+    </script>
 </body>
 </html>
